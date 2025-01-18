@@ -4,3 +4,4 @@ streamlit
 fuzzywuzzy
 openpyxl
 XlsxWriter
+joblib
