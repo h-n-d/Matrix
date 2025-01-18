@@ -1,187 +1,144 @@
-import streamlit as st
-import pandas as pd
-from fuzzywuzzy import fuzz
-import io
-from PIL import Image
-from joblib import Parallel, delayed
+/* Matrix Theme CSS */
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
-# Function to compute fuzzy ratio
-def compute_fuzzy_ratio(val1, val2):
-    return fuzz.ratio(val1, val2) if val1 != val2 else 100
-# Set app title and icon
-icon = Image.open("icon.png")
-st.set_page_config(page_title="Matrix", page_icon=icon)
+/* Global Styles */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
 
-# Function to display instructions
-def show_instructions():
-    st.markdown("""
-    ### Instructions
-    1. **Upload File**: Click on "Choose a data file" to upload an Excel file (.xlsx or .xls).
-    2. **Select Sheet**: Choose the sheet you want to work with from the uploaded file.
-    3. **Select Matrix Column**: Select the column you want to use for creating the matrix.
-    4. **Use Filter Columns**: Optionally, you can choose to filter the data by selecting "Use filter columns".
-        - If you select this option, you can choose one filter column and its values to filter the data.
-    5. **Set Match Threshold**: Use the slider to set the match threshold for fuzzy matching.
-    6. **Generate Report**: Click on "Generate Report" to create an Excel report with two sheets:
-        - **Summary**: Contains the count of matches for each value in the selected filter.
-        - **Metadata**: Contains the table of matches that satisfy the threshold along with the filter column values.
-    7. **Download Report**: Click on "Download Report" to download the generated report as an Excel file.
-    """)
+.stApp {
+    background-color: #000000;
+    background-image: 
+        linear-gradient(0deg, rgba(0, 20, 0, 0.9) 0%,
+                             rgba(0, 0, 0, 0.9) 100%);
+    font-family: 'Share Tech Mono', monospace;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
 
-st.title("Welcome To The Matrix")
+/* Title and Headers */
+.stTitle {
+    color: #00ff00 !important;
+    text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #00ff00;
+    text-align: center;
+    font-size: 3em !important;
+    margin-bottom: 2rem;
+    animation: glow 1.5s ease-in-out infinite alternate;
+}
 
-# Instruction button
-if st.button("Show Instructions"):
-    show_instructions()
+/* Buttons */
+.stButton > button {
+    background-color: transparent !important;
+    color: #00ff00 !important;
+    border: 2px solid #00ff00 !important;
+    border-radius: 5px;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+    text-shadow: 0 0 5px #00ff00;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+}
 
-# Upload file
-uploaded_file = st.file_uploader("Choose a data file", type=["xlsx", "xls"])
+.stButton > button:hover {
+    background-color: rgba(0, 255, 0, 0.1) !important;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.4);
+    transform: scale(1.05);
+}
 
-if uploaded_file:
-    # Load the Excel file with all columns as strings
-    xls = pd.ExcelFile(uploaded_file)
-    sheet_names = xls.sheet_names
 
-    # Select sheet
-    sheet = st.selectbox("Select the sheet", sheet_names)
-    if sheet:
-        df = pd.read_excel(uploaded_file, sheet_name=sheet, dtype=str)
-        columns = df.columns.tolist()
 
-        # Select matrix column
-        matrix_column = st.selectbox("Select the matrix column", columns)
+/* Text Elements */
+.stMarkdown {
+    color: #cccccc !important;
+}
 
-        # Option to use filter
-        use_filter = st.checkbox("Use filter columns")
+/* DataFrames and Tables */
+.dataframe {
+    background-color: rgba(0, 20, 0, 0.3) !important;
+    border: 1px solid rgba(0, 255, 0, 0.2) !important;
+    border-radius: 5px;
+}
 
-        # Optional filter column
-        filter_column = st.multiselect("Select filter columns (optional)", columns) if use_filter else []
+.dataframe th {
+    background-color: rgba(0, 255, 0, 0.1) !important;
+    color: #00ff00 !important;
+    text-shadow: 0 0 5px #00ff00;
+}
 
-        # Apply filters if any
-        if filter_column:
-            if len(filter_column) > 1:
-                st.error("Please select only one filter column.")
-            else:
-                filter_col = filter_column[0]
-                unique_values = df[filter_col].unique()
-                selected_values = st.radio(f"Filter {filter_col}", unique_values, horizontal=True)
-                if selected_values:
-                    filtered_df = df[df[filter_col].isin([selected_values])]
-                else:
-                    filtered_df = df
-        else:
-            filtered_df = df
+.dataframe td {
+    color: #ffffff !important;
+}
 
-        # Display the matrix column (filtered or not)
-        st.write(f"Matrix Column: {matrix_column}")
-        st.write(filtered_df[matrix_column])
+/* File Uploader */
+.stFileUploader {
+    background-color: rgba(0, 20, 0, 0.3) !important;
+    border: 2px dashed #00ff00 !important;
+    border-radius: 5px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+}
 
-        # Create a matrix using the selected column and apply fuzzy matching
-        matrix_values = filtered_df[matrix_column].tolist()
-        matrix_size = len(matrix_values)
-        matrix = pd.DataFrame(index=matrix_values, columns=matrix_values)
+.stFileUploader:hover {
+    background-color: rgba(0, 255, 0, 0.1) !important;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+}
 
-        # Parallel processing for fuzzy matching
-        results = Parallel(n_jobs=-1)(delayed(compute_fuzzy_ratio)(matrix_values[i], matrix_values[j]) for i in range(matrix_size) for j in range(matrix_size))
-        for i in range(matrix_size):
-            for j in range(matrix_size):
-                matrix.iloc[i, j] = results[i * matrix_size + j]
+/* Select Boxes */
+.stSelectbox > div > div {
+    background-color: rgba(0, 20, 0, 0.3) !important;
+    border: 1px solid #00ff00 !important;
+    color: #00ff00 !important;
+}
 
-        # Add a slider for match threshold
-        match_threshold = st.slider("Set match threshold", 0, 100, 80)
+/* Radio Buttons */
+.stRadio > div {
+    background-color: transparent !important;
+    color: #00ff00 !important;
+}
 
-        # Highlight values in the matrix that are above the threshold
-        def highlight_values(val):
-            color = '#ff4b4b' if val >= match_threshold else ''
-            return f'background-color: {color}'
+/* Animations */
+@keyframes glow {
+    from {
+        text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 15px #00ff00;
+    }
+    to {
+        text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #00ff00;
+    }
+}
 
-        st.write("Matching Matrix")
-        st.write(matrix.style.map(highlight_values))
+/* Matrix Rain Animation */
+.matrix-rain {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+}
 
-        # Find matches that satisfy the threshold
-        matches = []
-        for i in range(matrix_size):
-            for j in range(matrix_size):
-                if i != j and matrix.iloc[i, j] >= match_threshold:
-                    matches.append((matrix.index[i], matrix.columns[j], matrix.iloc[i, j]))
+/* Footer */
+.footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: rgba(0, 20, 0, 0.8);
+    padding: 1rem;
+    text-align: center;
+    border-top: 1px solid #00ff00;
+    box-shadow: 0 -5px 15px rgba(0, 255, 0, 0.1);
+}
 
-        # Display matches in a tabular form
-        if matches:
-            matches_df = pd.DataFrame(matches, columns=["Value 1", "Value 2", "Match Ratio"])
-            st.write("Matches that satisfy the threshold")
-            st.write(matches_df)
+.footer a {
+    color: #00ff00;
+    text-decoration: none;
+    margin: 0 1rem;
+    transition: all 0.3s ease;
+}
 
-            # Display the count of matches
-            st.write(f"Count of matches: {len(matches)}")
-
-        # Generate report
-        if st.button("Generate Report"):
-            summary_data = []
-            metadata_data = []
-
-            if filter_column:
-                filter_col = filter_column[0]
-                for value in unique_values:
-                    temp_df = df[df[filter_col] == value]
-                    matrix_values = temp_df[matrix_column].tolist()
-                    matrix_size = len(matrix_values)
-                    matrix = pd.DataFrame(index=matrix_values, columns=matrix_values)
-
-                    # Parallel processing for fuzzy matching
-                    results = Parallel(n_jobs=-1)(delayed(compute_fuzzy_ratio)(matrix_values[i], matrix_values[j]) for i in range(matrix_size) for j in range(matrix_size))
-                    for i in range(matrix_size):
-                        for j in range(matrix_size):
-                            matrix.iloc[i, j] = results[i * matrix_size + j]
-
-                    matches = []
-                    for i in range(matrix_size):
-                        for j in range(matrix_size):
-                            if i != j and matrix.iloc[i, j] >= match_threshold:
-                                matches.append((matrix.index[i], matrix.columns[j], matrix.iloc[i, j]))
-
-                    summary_data.append([value, len(matches)])
-                    for match in matches:
-                        metadata_data.append([value] + list(match))
-
-                summary_df = pd.DataFrame(summary_data, columns=[filter_col, "Match Count"])
-                metadata_df = pd.DataFrame(metadata_data, columns=[filter_col, "Value 1", "Value 2", "Match Ratio"])
-            else:
-                matrix_values = df[matrix_column].tolist()
-                matrix_size = len(matrix_values)
-                matrix = pd.DataFrame(index=matrix_values, columns=matrix_values)
-
-                # Parallel processing for fuzzy matching
-                results = Parallel(n_jobs=-1)(delayed(compute_fuzzy_ratio)(matrix_values[i], matrix_values[j]) for i in range(matrix_size) for j in range(matrix_size))
-                for i in range(matrix_size):
-                    for j in range(matrix_size):
-                        matrix.iloc[i, j] = results[i * matrix_size + j]
-
-                matches = []
-                for i in range(matrix_size):
-                    for j in range(matrix_size):
-                        if i != j and matrix.iloc[i, j] >= match_threshold:
-                            matches.append((matrix.index[i], matrix.columns[j], matrix.iloc[i, j]))
-
-                summary_data.append(["All Data", len(matches)])
-                for match in matches:
-                    metadata_data.append(["All Data"] + list(match))
-
-                summary_df = pd.DataFrame(summary_data, columns=["Filter", "Match Count"])
-                metadata_df = pd.DataFrame(metadata_data, columns=["Filter", "Value 1", "Value 2", "Match Ratio"])
-
-            output = io.BytesIO()
-            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                summary_df.to_excel(writer, sheet_name='Summary', index=False)
-                metadata_df.to_excel(writer, sheet_name='Metadata', index=False)
-
-            st.download_button(
-                label="Download Report",
-                data=output.getvalue(),
-                file_name="report.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-
-        # End of the app
-        st.markdown("*****")
-        st.markdown("Got something to say? Share your feedback or a testimonial here: himalaya.datta@pwc.com / himalaya.datta@gmail.com")
-
+.footer a:hover {
+    text-shadow: 0 0 10px #00ff00;
+}
