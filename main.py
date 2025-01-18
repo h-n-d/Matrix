@@ -1,50 +1,33 @@
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.backends import default_backend
 import streamlit as st
-import os
+from cryptography.fernet import Fernet
 
-import pandas as pd
-from fuzzywuzzy import fuzz
-import io
-from PIL import Image
-from joblib import Parallel, delayed
+# Load the Fernet key from Streamlit secrets
+fernet_key = st.secrets["ENCRYPTION_KEY"]
 
-# Set app title and icon
-icon = Image.open("icon.png")
-st.set_page_config(page_title="Matrix", page_icon=icon)
+# Initialize the Fernet cipher
+cipher = Fernet(fernet_key)
 
+# Function to decrypt and execute code
+def decrypt_and_execute(encrypted_file: str, key: Fernet):
+    try:
+        # Read the encrypted file
+        with open(encrypted_file, "rb") as file:
+            encrypted_data = file.read()
 
+        # Decrypt the data in memory
+        decrypted_code = key.decrypt(encrypted_data).decode()
 
-@st.cache_data(show_spinner=False)
-def decrypt_code(encrypted_file: str, key: bytes):
-    # Read the encrypted file
-    with open(encrypted_file, "rb") as file:
-        ciphertext = file.read()
+        # Execute the decrypted code
+        exec(decrypted_code, globals())  # Use globals() to maintain imports/context
+    except Exception as e:
+        st.error("Error decrypting or executing the code.")
+        st.error(str(e))
+    finally:
+        # Clear decrypted code from memory
+        decrypted_code = None
 
-    # Decrypt the data using AES-256
-    cipher = Cipher(
-        algorithms.AES(key),
-        modes.CFB(os.urandom(16)),  # Ensure the mode matches during encryption
-        backend=default_backend()
-    )
-    decryptor = cipher.decryptor()
-    decrypted_data = decryptor.update(ciphertext) + decryptor.finalize()
-
-    return decrypted_data.decode()
-
-# Get the strong key from Streamlit secrets
-strong_key = st.secrets["ENCRYPTION_KEY"]
-
-# Path to the encrypted code
+# Path to your encrypted code file
 encrypted_file_path = "encrypted_code.bin"
 
-try:
-    # Decrypt and execute the code
-    decrypted_code = decrypt_code(encrypted_file_path, bytes.fromhex(strong_key))
-    exec(decrypted_code)
-except Exception as e:
-    st.error("Error decrypting or executing the code.")
-    st.error(str(e))
-
-# Cleanup after execution
-decrypted_code = None
+# Decrypt and execute at runtime
+decrypt_and_execute(encrypted_file_path, cipher)
