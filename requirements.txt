@@ -5,3 +5,5 @@ fuzzywuzzy
 openpyxl
 XlsxWriter
 joblib
+cryptography
+python-Levenshtein
