@@ -3,7 +3,11 @@ import pandas as pd
 from fuzzywuzzy import fuzz
 import io
 from PIL import Image
+from joblib import Parallel, delayed
 
+# Function to compute fuzzy ratio
+def compute_fuzzy_ratio(val1, val2):
+    return fuzz.ratio(val1, val2) if val1 != val2 else 100
 # Set app title and icon
 icon = Image.open("icon.png")
 st.set_page_config(page_title="Matrix", page_icon=icon)
@@ -77,13 +81,11 @@ if uploaded_file:
         matrix_size = len(matrix_values)
         matrix = pd.DataFrame(index=matrix_values, columns=matrix_values)
 
+        # Parallel processing for fuzzy matching
+        results = Parallel(n_jobs=-1)(delayed(compute_fuzzy_ratio)(matrix_values[i], matrix_values[j]) for i in range(matrix_size) for j in range(matrix_size))
         for i in range(matrix_size):
             for j in range(matrix_size):
-                if i != j:
-                    ratio = fuzz.ratio(matrix_values[i], matrix_values[j])
-                    matrix.iloc[i, j] = ratio
-                else:
-                    matrix.iloc[i, j] = 100  # Perfect match with itself
+                matrix.iloc[i, j] = results[i * matrix_size + j]
 
         # Add a slider for match threshold
         match_threshold = st.slider("Set match threshold", 0, 100, 80)
@@ -125,13 +127,11 @@ if uploaded_file:
                     matrix_size = len(matrix_values)
                     matrix = pd.DataFrame(index=matrix_values, columns=matrix_values)
 
+                    # Parallel processing for fuzzy matching
+                    results = Parallel(n_jobs=-1)(delayed(compute_fuzzy_ratio)(matrix_values[i], matrix_values[j]) for i in range(matrix_size) for j in range(matrix_size))
                     for i in range(matrix_size):
                         for j in range(matrix_size):
-                            if i != j:
-                                ratio = fuzz.ratio(matrix_values[i], matrix_values[j])
-                                matrix.iloc[i, j] = ratio
-                            else:
-                                matrix.iloc[i, j] = 100  # Perfect match with itself
+                            matrix.iloc[i, j] = results[i * matrix_size + j]
 
                     matches = []
                     for i in range(matrix_size):
@@ -150,13 +150,11 @@ if uploaded_file:
                 matrix_size = len(matrix_values)
                 matrix = pd.DataFrame(index=matrix_values, columns=matrix_values)
 
+                # Parallel processing for fuzzy matching
+                results = Parallel(n_jobs=-1)(delayed(compute_fuzzy_ratio)(matrix_values[i], matrix_values[j]) for i in range(matrix_size) for j in range(matrix_size))
                 for i in range(matrix_size):
                     for j in range(matrix_size):
-                        if i != j:
-                            ratio = fuzz.ratio(matrix_values[i], matrix_values[j])
-                            matrix.iloc[i, j] = ratio
-                        else:
-                            matrix.iloc[i, j] = 100  # Perfect match with itself
+                        matrix.iloc[i, j] = results[i * matrix_size + j]
 
                 matches = []
                 for i in range(matrix_size):
@@ -186,3 +184,4 @@ if uploaded_file:
         # End of the app
         st.markdown("*****")
         st.markdown("Got something to say? Share your feedback or a testimonial here: himalaya.datta@pwc.com / himalaya.datta@gmail.com")
+
