@@ -3,6 +3,18 @@ from cryptography.hazmat.backends import default_backend
 import streamlit as st
 import os
 
+import pandas as pd
+from fuzzywuzzy import fuzz
+import io
+from PIL import Image
+from joblib import Parallel, delayed
+
+# Set app title and icon
+icon = Image.open("icon.png")
+st.set_page_config(page_title="Matrix", page_icon=icon)
+
+
+
 @st.cache_data(show_spinner=False)
 def decrypt_code(encrypted_file: str, key: bytes):
     # Read the encrypted file
