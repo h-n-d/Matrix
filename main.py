@@ -34,14 +34,14 @@ if st.button("Show Instructions"):
 uploaded_file = st.file_uploader("Choose a data file", type=["xlsx", "xls"])
 
 if uploaded_file:
-    # Load the Excel file
+    # Load the Excel file with all columns as strings
     xls = pd.ExcelFile(uploaded_file)
     sheet_names = xls.sheet_names
 
     # Select sheet
     sheet = st.selectbox("Select the sheet", sheet_names)
     if sheet:
-        df = pd.read_excel(uploaded_file, sheet_name=sheet)
+        df = pd.read_excel(uploaded_file, sheet_name=sheet, dtype=str)
         columns = df.columns.tolist()
 
         # Select matrix column
@@ -94,7 +94,7 @@ if uploaded_file:
             return f'background-color: {color}'
 
         st.write("Matching Matrix")
-        st.write(matrix.style.applymap(highlight_values))
+        st.write(matrix.style.map(highlight_values))
 
         # Find matches that satisfy the threshold
         matches = []
